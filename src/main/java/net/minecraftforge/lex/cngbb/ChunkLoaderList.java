@@ -24,7 +24,6 @@ import it.unimi.dsi.fastutil.longs.Long2IntMap;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.command.CommandSource;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.LongArrayNBT;
 import net.minecraft.util.Direction;
@@ -89,17 +88,18 @@ public class ChunkLoaderList implements IChunkLoaderList {
         return ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
-    private void force(BlockPos pos) { forceload(pos, "add"); }
-    private void unforce(BlockPos pos) { forceload(pos, "remove"); }
+    private void force(BlockPos pos) { forceload(pos, true); }
+    private void unforce(BlockPos pos) { forceload(pos, false); }
 
-    private void forceload(BlockPos pos, String action) {
-        if (this.world == null || this.world.getServer() == null) return;
-        CommandSource source = this.world.getServer().getCommandSource().withWorld(this.world); //TODO: Use custom source that doesn't spam chat?
+    private void forceload(BlockPos pos, boolean load) {
+        if (this.world == null || this.world.getChunkProvider() == null) return;
+        ChunkPos chunkPos = new ChunkPos(pos);
+        
         @SuppressWarnings("unused")
-        int ret = this.world.getServer().getCommandManager().handleCommand(source, "forceload " + action + " " + pos.getX() + " " + pos.getZ());
+        boolean forced = this.world.forceChunk(chunkPos.x, chunkPos.z, load);
 
         //Lame feedback.
-        //BasicParticleType particle = ret == 0 ? ParticleTypes.ANGRY_VILLAGER : ParticleTypes.HAPPY_VILLAGER;
+        //BasicParticleType particle = forced ? ParticleTypes.HAPPY_VILLAGER : ParticleTypes.ANGRY_VILLAGER;
         //world.spawnParticle(particle, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5F, 5, 0.5D, 0.5D, 0.5D, 0.0D);
     }
 
